@@ -1,0 +1,11 @@
+{
+	 "name" 		: "tMutators Set Save"
+	,"description" 	: "Tast's Mutators Setting Saver Auto"
+	,"author" 		: "Tast"
+	,"contact" 		: ""
+	,"version" 		: "1.0"
+	,"hooks"		: 
+	[ 
+		{"hook_id":"lib/managers/mutatorsmanager","script_path":"MutatorsManager.lua"}
+	]
+}

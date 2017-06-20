@@ -1,0 +1,12 @@
+{
+	"name" 			: "tMutators Set Save",
+	"description" 	: "Tast's MutatorsSetSave",
+	"author" 		: "Tast",
+	"contact" 		: "",
+	"version" 		: "1.72.257.0",
+	"hooks": 
+	[
+		 {"hook_id":"lib/managers/mutatorsmanager" 					,"script_path" :"MutatorsManager.lua" 		}
+		/*,{"hook_id":"lib/managers/menu/pages/mutatorscategorypage" 	,"script_path" :"MutatorscategoryPage.lua" 	}*/
+	]
+}
