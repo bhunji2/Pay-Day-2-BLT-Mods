@@ -1,0 +1,10 @@
+{
+	"name" 			: "tSecureBodyBagNoMoney",
+	"description" 	: "Tast's Secure BodyBag with No Money",
+	"author" 		: "Tast",
+	"contact" 		: "",
+	"version" 		: "1.0",
+	"hooks": [
+		{"hook_id":"lib/managers/mission/elementareatrigger","script_path":"tSecureBodyBagNoMoney.lua"}
+	]
+}
