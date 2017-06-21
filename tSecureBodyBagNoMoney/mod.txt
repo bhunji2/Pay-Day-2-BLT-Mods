@@ -2,7 +2,7 @@
 	"name" 			: "tSecureBodyBagNoMoney",
 	"description" 	: "Tast's Secure BodyBag with No Money",
 	"author" 		: "Tast",
-	"contact" 		: "",
+	"contact" 		: "https://github.com/bhunji2/Pay-Day-2-BLT-Mods/tree/master/tSecureBodyBagNoMoney",
 	"version" 		: "1.0",
 	"hooks": [
 		{"hook_id":"lib/managers/mission/elementareatrigger","script_path":"tSecureBodyBagNoMoney.lua"}
