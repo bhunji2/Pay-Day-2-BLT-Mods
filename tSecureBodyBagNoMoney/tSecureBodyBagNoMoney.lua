@@ -3,8 +3,10 @@
 		Initial Release.
 -- 1.1 2017.06.24
 		Make a stack of bags just like usual.
--- 1.2 2017.06.
+-- 1.2 2017.06.25
 		Fix some bug
+-- 1.3 2017.06.25
+		Compatible with more map and situation
 --]]
 
 if not LuaNetworking:IsHost() then return end
@@ -58,25 +60,29 @@ function GetLootBagSecuredEnt()
 	end
 	log2("/GetLootBagSecuredEnt = " .. tostring(count) .. " / " .. tostring(total))
 end
---[[
+
 --lib/managers/mission/coremissionscriptelement.lua
 tSBB_MSE_OE = tSBB_MSE_OE or MissionScriptElement.on_executed
-function MissionScriptElement:on_executed2(instigator, alternative, skip_execute_on_executed)
-	log2("tSBB_MSE_OE " .. tostring(self		 :id()) .. " - " .. tostring(self	   :editor_name()))
+function MissionScriptElement:on_executed(instigator, alternative, skip_execute_on_executed)
+	log2("tSBB_MSE_OE " .. tostring(self:id()) .. " - " .. tostring(self:editor_name()))
 	
 	if not self._values.enabled and tMSM:sValue( self:id() ) == "ForcePass" then
 		log2("tSBB_MSE_OE ForceTrigger " .. tostring(self:id()) .. " - " .. tostring(self:editor_name()))
-		
+		--[[
 		if not skip_execute_on_executed or CoreClass.type_name(skip_execute_on_executed) ~= "boolean" then
 			self:_trigger_execute_on_executed(instigator, alternative)
 		end
-
+		--]]
+		
+		self._values.enabled = true
+		tSBB_MSE_OE(self,instigator, alternative, skip_execute_on_executed)
+		self._values.enabled = false
 		return
 	end
 	
 	tSBB_MSE_OE(self,instigator, alternative, skip_execute_on_executed)
 end
---]]
+
 -- lib/managers/mission/elementareatrigger
 tSBB_EAT_PI = tSBB_EAT_PI or ElementAreaTrigger.project_instigators
 function ElementAreaTrigger:project_instigators()
@@ -104,13 +110,13 @@ end
 -- lib/managers/mission/elementcarry
 tSBB_EC_OE = tSBB_EC_OE or ElementCarry.on_executed
 function ElementCarry:on_executed(instigator) log2("/ElementCarry on_executed")
-	if not alive(instigator)
-	or not self:values() --then return end
-	or not self:enabled()then return end
-	
+	if not alive(instigator) then return end
+	--or not self:values()   --then return end
+	--or not self:enabled()	 then return end
+	log2("/ElementCarry on_executed alive")
 	local	carry_ext = instigator:carry_data() if not	carry_ext	then return end
 	local 	carry_id  = carry_ext :carry_id() 	if not	carry_id	then return end
-	
+	log2("/ElementCarry on_executed carry_id")
 	if 	table.contains(CarryID,carry_id)
 	then 	SubmitSecuredBag(instigator,self)
 	else	tSBB_EC_OE(self  ,instigator) end
@@ -131,6 +137,12 @@ function SubmitSecuredBag(instigator,ElementCarry) log2("/SubmitSecuredBag")
 		end
 	end
 	
+	log2("#SecureZone " .. tostring(#SecureZone))
+	if #SecureZone == 0 then 
+		SuccessSecured = SubmitRules(nil , { ElementCarry = ElementCarry })
+		log2("SuccessSecured" .. tostring(SuccessSecured))
+	end
+	
 	if not SuccessSecured then return end
 	-- Remove Insteraction from secured bag
 	if  instigator:damage():has_sequence		("secured") then
@@ -141,8 +153,10 @@ end
 
 function SubmitRules(Ent,v) log2("/SubmitRules")
 	local 	Operation = v.ElementCarry:value("operation")
+	log2("Operation" .. tostring(Operation))
 	
-	if 	not Ent:enabled() 
+	if 	    Ent
+	and not Ent:enabled() 
 	--	and	tMSM:sValue("State") ~= "ForceUsable"
 	--or 	not HasSeq(Ent,v.nuSeq)
 	or 	not	string.find(Operation, "secure")
