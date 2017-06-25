@@ -7,6 +7,8 @@
 		Fix some bug
 -- 1.3 2017.06.25
 		Compatible with more map and situation
+-- 1.4 2017.06.26
+		Fix crash bug
 --]]
 
 if not LuaNetworking:IsHost() then return end
@@ -60,7 +62,7 @@ function GetLootBagSecuredEnt()
 	end
 	log2("/GetLootBagSecuredEnt = " .. tostring(count) .. " / " .. tostring(total))
 end
-
+--[[
 --lib/managers/mission/coremissionscriptelement.lua
 tSBB_MSE_OE = tSBB_MSE_OE or MissionScriptElement.on_executed
 function MissionScriptElement:on_executed(instigator, alternative, skip_execute_on_executed)
@@ -82,7 +84,7 @@ function MissionScriptElement:on_executed(instigator, alternative, skip_execute_
 	
 	tSBB_MSE_OE(self,instigator, alternative, skip_execute_on_executed)
 end
-
+--]]
 -- lib/managers/mission/elementareatrigger
 tSBB_EAT_PI = tSBB_EAT_PI or ElementAreaTrigger.project_instigators
 function ElementAreaTrigger:project_instigators()
