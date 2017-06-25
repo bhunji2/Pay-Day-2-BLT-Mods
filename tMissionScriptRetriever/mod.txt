@@ -3,7 +3,7 @@
 	,"description" 	: "Mission Script Retriever \n Dump Mission Script to game folder \n press key after map loaded."
 	,"author" 		: "hejoro , BLT keypress version by Tast"
 	,"contact" 		: "https://goo.gl/VUXZKz"
-	,"version" 		: "1.0"
+	,"version" 		: "1.1"
 	,"hooks": 
 	[
 	 { "hook_id" : "lib/managers/missionmanager" , "script_path" : "tMissionScriptRetriever.lua" }
@@ -14,7 +14,7 @@
 		"name"		 : "Mission Script Retriever",
 		"description": "Key to seralize current mission's scripts.",
 		"script_path": "tMissionScriptRetrieverKeyBind.lua",
-		"run_in_menu": false,
+		"run_in_menu": true,
 		"run_in_game": true,
 		"localized"	 : false
 	}]

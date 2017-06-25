@@ -779,12 +779,12 @@ Hooks:PostHook( MissionManager, "parse"	, "" , function(params, stage_name, offs
 	PrintTable(params)
 end )
 ]]
-
+--[[
 tMSR_MM_Parse = tMSR_MM_Parse or MissionManager.parse
 function MissionManager:parse(params, stage_name, offset, file_type)
 	-- "file_path" = levels/narratives/e_framing_frame/stage_1/mission
 	-- "stage_name" = stage1
-	
+
 	local file_path
 	if CoreClass.type_name(params) == "table" then
 			file_path = params.file_path
@@ -793,32 +793,40 @@ function MissionManager:parse(params, stage_name, offset, file_type)
 	self.Retriever = { file_path = file_path , stage_name = stage_name }
 	return tMSR_MM_Parse(self, params, stage_name, offset, file_type)
 end
+]]
 
 tMSR_MM_STS = tMSR_MM_STS or MissionManager._serialize_to_script
-function MissionManager:_serialize_to_script( _type, name ,_do)
-	if not _do then return tMSR_MM_STS(self, _type, name) end
+function MissionManager:_serialize_to_script( _type, name)
+	local script	= deep_clone( tMSR_MM_STS(self, _type, name) )
+	local SCjson 	= JSON:encode_pretty(script)
+	local levelID	= managers.job:current_level_id()
+	local BasePath	= "MissionScripts_enable/"
+	local MapPath	= BasePath .. levelID .. "/"
+	SystemFS:make_dir(BasePath .. levelID)
 	
-	local script = deep_clone( tMSR_MM_STS(self, _type, name) )
-	local levelID= managers.job:current_level_id()
-	local dirPath= "mission_scripts/".. levelID .. "/"
+	self.Retriever 			= self.Retriever or {  }
+	self.Retriever["_all"] 	= SCjson
 	
-	SystemFS:make_dir("mission_scripts")
-	SystemFS:make_dir("mission_scripts/" .. levelID)
-	
-	local  file = io.open(dirPath .. "_all.json", "w")
-	if not file then return tMSR_MM_STS(self, _type, name) end
-	
-	file:write(JSON:encode_pretty(script))
-	file:close()
+	local file = io.open(MapPath .. "_all.json", "w")
+	if 	  file then 
+		  file:write(SCjson)
+		  file:close()
+	end
 	
 	for k,v in pairs(script) do
-		local file = io.open(dirPath .. k .. ".json", "w")
-		file:write(JSON:encode_pretty(v))
-		file:close()
+		local SCjsons = JSON:encode_pretty(v)
+		self.Retriever[tostring(k)] = SCjsons
+		
+		local file = io.open(MapPath .. tostring(k) .. ".json", "w")
+		if 	  file then
+			file:write(SCjsons)
+			file:close()
+		end
 	end
 	
 	return tMSR_MM_STS(self, _type, name)
 end
+
 --[[
 tMSR_MM_STS = tMSR_MM_STS or MissionManager._serialize_to_script
 function MissionManager:WriteRetriever()
