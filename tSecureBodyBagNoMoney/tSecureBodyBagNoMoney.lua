@@ -70,12 +70,6 @@ function MissionScriptElement:on_executed(instigator, alternative, skip_execute_
 	
 	if not self._values.enabled and tMSM:sValue( self:id() ) == "ForcePass" then
 		log2("tSBB_MSE_OE ForceTrigger " .. tostring(self:id()) .. " - " .. tostring(self:editor_name()))
-		--[[
-		if not skip_execute_on_executed or CoreClass.type_name(skip_execute_on_executed) ~= "boolean" then
-			self:_trigger_execute_on_executed(instigator, alternative)
-		end
-		--]]
-		
 		self._values.enabled = true
 		tSBB_MSE_OE(self,instigator, alternative, skip_execute_on_executed)
 		self._values.enabled = false
