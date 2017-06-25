@@ -2,7 +2,7 @@
 	 "name" 		: "tMission Script Retriever"
 	,"description" 	: "Mission Script Retriever \n Dump Mission Script to game folder \n press key after map loaded."
 	,"author" 		: "hejoro , BLT keypress version by Tast"
-	,"contact" 		: "https://goo.gl/XEMLBn"
+	,"contact" 		: "https://goo.gl/VUXZKz"
 	,"version" 		: "1.0"
 	,"hooks": 
 	[
