@@ -19,7 +19,7 @@ description:
 ```
 1.	手動在遊戲根目錄建立 MissionScripts_Auto 資料夾，每次載入地圖都會自動輸出。
 	
-2.	地圖載入後按下BLT自訂按鍵輸出按鈕，MissionScript將會存入 MissionScripts 資料夾。
+2.	地圖載入後按下BLT自訂按鍵輸出按鈕，任務腳本將會存入 MissionScripts 資料夾。
 ```
 模組說明：
 ```

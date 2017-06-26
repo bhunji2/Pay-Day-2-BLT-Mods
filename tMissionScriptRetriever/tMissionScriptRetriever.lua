@@ -751,12 +751,13 @@ function MissionManager:_serialize_to_script( _type, name)
 	local script	= deep_clone( tMSR_MM_STS(self, _type, name) )
 	local SCjson 	= JSON:encode_pretty(script)
 	
-	self.Retriever 			= 	self.Retriever or {  }
-	if SCjson ~= "[]" then 		self.Retriever["_all"] = SCjson end
-	
-	for k,v in pairs(script) do
-		local SCjsons = JSON:encode_pretty(v)
-		self.Retriever[tostring(k)] = SCjsons
+	self.Retriever 			= self.Retriever 		 or {  }
+	self.Retriever["_all"]	= self.Retriever["_all"] or {  }
+	table.insert(			  self.Retriever["_all"],SCjson)
+
+	for k,v in pairs(script) do log(tostring(k))
+		self.Retriever[tostring(k)] = self.Retriever[tostring(k)] or {}
+		table.insert(self.Retriever[tostring(k)],JSON:encode_pretty(v))
 	end
 	
 	self:WriteRetriever()
@@ -776,17 +777,18 @@ function MissionManager:WriteRetriever(_type)
 	local BasePath	= _type and "MissionScripts/" or "MissionScripts_Auto/"
 	local MapPath	= BasePath .. level .. "/"
 	
-	if _type then 	SystemFS:make_dir(BasePath) 		end
+	if _type then 	SystemFS:make_dir(BasePath) end
 					SystemFS:make_dir(BasePath .. level)
 	
-	for k,v in pairs(self.Retriever) do
-		local file = io.open(MapPath .. tostring(k) .. ".json", "w")
+	for k,v in pairs(self.Retriever) do for i,v2 in pairs(v) do if v2 ~= "[]" then
+		local file = io.open(MapPath .. tostring(k) .. tostring(i) .. ".json", "w")
 		if 	  file then
 			  file:write("//" .. JobLoc .. " - " .. JobLoc2 .. "\n")
-			  file:write(v)
+			  file:write(v2)
 			  file:close()
 		else  return false end
-	end
+	end end end
+	
 	return true
 end
 
