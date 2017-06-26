@@ -1,5 +1,6 @@
 -- Mission Script Retriever By hejoro
 -- https://www.unknowncheats.me/wiki/PayDay_2:Mission_Elements
+-- https://help.github.com/articles/basic-writing-and-formatting-syntax/
 
 if not JSON then
 	local VERSION = 20140418.11  -- version history at end of file
@@ -744,87 +745,49 @@ if not JSON then
 
 	JSON = OBJDEF:new()
 end
---[[
-MissionManager__serialize_to_script = MissionManager__serialize_to_script or MissionManager._serialize_to_script
-function MissionManager:_serialize_to_script2( _type, name )
-	log("MissionManager:_serialize_to_script")
-	local script = deep_clone(MissionManager__serialize_to_script(self, _type, name))
-	--local file = io.open("mission_scripts/"..managers.job:current_level_id().."/_all.json", "w+")
-	local file = io.open("mission_scripts_"..managers.job:current_level_id().."_all.json", "w")
-	if not file then return MissionManager__serialize_to_script(self, _type, name) end
-	file:write(JSON:encode_pretty(script))
-	file:close()
-	for k,v in pairs(script) do
-		local file = io.open("mission_scripts_"..managers.job:current_level_id().."_"..k..".json", "w")
-		file:write(JSON:encode_pretty(v))
-		file:close()
-	end
-	return MissionManager__serialize_to_script(self, _type, name)
-end
-]]
---[[
-Hooks:PostHook( MissionManager, "parse"	, "" , function(params, stage_name, offset, file_type)
-	log("/MissionManager parse")
-	-- "file_path" = levels/narratives/e_framing_frame/stage_1/mission
-	-- "stage_name" = stage1
-	
-	local file_path, activate_mission
-	if CoreClass.type_name(params) == "table" then
-		file_path = params.file_path
-	else
-		file_path = params
-	end
-	
-	managers.mission.Retriever = { file_path = file_path , stage_name = stage_name }
-	PrintTable(params)
-end )
-]]
---[[
-tMSR_MM_Parse = tMSR_MM_Parse or MissionManager.parse
-function MissionManager:parse(params, stage_name, offset, file_type)
-	-- "file_path" = levels/narratives/e_framing_frame/stage_1/mission
-	-- "stage_name" = stage1
-
-	local file_path
-	if CoreClass.type_name(params) == "table" then
-			file_path = params.file_path
-	else	file_path = params	end
-	
-	self.Retriever = { file_path = file_path , stage_name = stage_name }
-	return tMSR_MM_Parse(self, params, stage_name, offset, file_type)
-end
-]]
 
 tMSR_MM_STS = tMSR_MM_STS or MissionManager._serialize_to_script
 function MissionManager:_serialize_to_script( _type, name)
 	local script	= deep_clone( tMSR_MM_STS(self, _type, name) )
 	local SCjson 	= JSON:encode_pretty(script)
-	local levelID	= managers.job:current_level_id()
-	local BasePath	= "MissionScripts_enable/"
-	local MapPath	= BasePath .. levelID .. "/"
-	SystemFS:make_dir(BasePath .. levelID)
 	
-	self.Retriever 			= self.Retriever or {  }
-	self.Retriever["_all"] 	= SCjson
-	
-	local file = io.open(MapPath .. "_all.json", "w")
-	if 	  file then 
-		  file:write(SCjson)
-		  file:close()
-	end
+	self.Retriever 			= 	self.Retriever or {  }
+	if SCjson ~= "[]" then 		self.Retriever["_all"] = SCjson end
 	
 	for k,v in pairs(script) do
 		local SCjsons = JSON:encode_pretty(v)
 		self.Retriever[tostring(k)] = SCjsons
-		
-		local file = io.open(MapPath .. tostring(k) .. ".json", "w")
-		if 	  file then
-			file:write(SCjsons)
-			file:close()
-		end
 	end
 	
+	self:WriteRetriever()
 	return tMSR_MM_STS(self, _type, name)
+end
+
+function MissionManager:WriteRetriever(_type)
+	local Contact	= managers.job:current_contact_id()
+	local JobName	= managers.job:current_job_data().name_id
+	local JobLoc	= Localizer:lookup(Idstring(JobName))
+	local JobLoc2	= managers.localization:text(JobName)
+	local LevelName	= "." .. managers.job:current_level_id()
+	local StageNum	= "" or "." .. tostring(managers.job:current_stage())
+	local level		= Contact .. LevelName .. StageNum .. "[" .. JobLoc .. "]"
+		  level 	= level:gsub(":","-")--:gsub(" ","_")
+	
+	local BasePath	= _type and "MissionScripts/" or "MissionScripts_Auto/"
+	local MapPath	= BasePath .. level .. "/"
+	
+	if _type then 	SystemFS:make_dir(BasePath) 		end
+					SystemFS:make_dir(BasePath .. level)
+	
+	for k,v in pairs(self.Retriever) do
+		local file = io.open(MapPath .. tostring(k) .. ".json", "w")
+		if 	  file then
+			  file:write("//" .. JobLoc .. " - " .. JobLoc2 .. "\n")
+			  file:write(v)
+			  file:close()
+		else  return false end
+	end
+	return true
 end
 
 --[[
