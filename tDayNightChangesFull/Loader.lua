@@ -6,10 +6,10 @@ veritas = veritas or
 	 mod_path 	= ModPath
 	,save_path 	= SavePath .. "veritas.txt"
 	,main_menu 	= "veritas_menu"
+	,options 	= {}
 	,levels		= {}
 	,levels_data= {}
-	,options 	= {}
-	,Localize	= {}
+	,contracts	= { ["unknow"] = 0 }
 }
 
 function veritas:Save()
@@ -88,8 +88,12 @@ function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
 		end
 	end
 end
+
+
+-------------------------------------------------------------------------------------------------------------------
+
 -- managers.menu:open_node("cWIP_options")
-Hooks:Add("MenuManagerInitialize", "", function(menu_manager)
+Hooks:Add("MenuManagerInitialize", "tDNCF_MMI", function(menu_manager)
 	MenuCallbackHandler.DNF_Close_Options 	= function(this)  		end
 	MenuCallbackHandler.DNF_Config_Reset 	= function(this, item) 	end
 	MenuCallbackHandler.DNF_ValueSet 		= function(this, item)
@@ -98,20 +102,26 @@ Hooks:Add("MenuManagerInitialize", "", function(menu_manager)
 	end
 end)
 
-Hooks:Add("MenuManagerBuildCustomMenus", "", function( menu_manager, nodes )
+Hooks:Add("MenuManagerSetupCustomMenus", "tDNCF_MMSC", function( menu_manager, nodes )
 	MenuHelper:NewMenu( veritas.main_menu )
+	MenuHelper:NewMenu( veritas.main_menu .. "_unknow" )
 	
-	local 	contacts  		= tweak_data.narrative.contacts
-			contacts.Unknow = 0
-	
-	for k , v in pairs( contacts ) do 
-		contacts[k] = 0
-		MenuHelper:NewMenu( veritas.main_menu .. "_" .. k ) 
+	for k , v in pairs( tweak_data.narrative.contacts ) do 
+		veritas.contracts[k] = 0
+		MenuHelper.menus = MenuHelper.menus or {}
+
+		local new_menu = deep_clone( MenuHelper.menu_to_clone )
+		new_menu._items = {}
+		MenuHelper.menus[veritas.main_menu .. "_" .. k] = new_menu
 	end
-	
+end)
+
+Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, nodes )
 	for level_id , name_id in pairs( veritas.levels ) do
-		local contract	= GetTableValue(veritas.levels_data[ level_id ],"contact") or "Unknow"
+		local contract	= GetTableValue(veritas.levels_data[ level_id ],"contact") or "unknow"
 		local menu_id 	= veritas.main_menu .. "_" .. contract
+		
+		veritas.contracts[contract] = true
 		
 		MenuHelper:AddMultipleChoice( {
 			id 			= "veritasID_" 		.. level_id,
@@ -130,16 +140,14 @@ Hooks:Add("MenuManagerBuildCustomMenus", "", function( menu_manager, nodes )
 			value 		= veritas.options[ level_id ] or 1,
 			localized	= true
 		} )
-		
-		contacts[contract] = contacts[contract] + 1
 	end
 	
 	nodes[veritas.main_menu] = 
 		MenuHelper:BuildMenu	( veritas.main_menu, { area_bg = "half" } )  
 		MenuHelper:AddMenuItem	( nodes.lua_mod_options_menu, veritas.main_menu, "veritas_menuTitle", "veritas_menuDesc")
 	
-	for k , v in pairs( contacts ) do
-		if contacts[k] > 0 then
+	for k , v in pairs( veritas.contracts ) do
+		if v then
 			local menu_id = veritas.main_menu .. "_" .. k
 			nodes[menu_id] = 
 			MenuHelper:BuildMenu	( menu_id, { area_bg = "half" } )  
@@ -151,8 +159,6 @@ end)
 --------------------------------------------------------------------------------------------------------------
 
 Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( self )
-	SaveTable(veritas.Localize,"Localize.lua")
-	self:add_localized_strings( veritas.Localize )
 	self:add_localized_strings({
 		 ["veritas_menuTitle"] 			= "Day/Night Changes"
 		,["veritas_menuDesc"] 			= "Change the day/night cycles for certain heists!"
@@ -164,7 +170,7 @@ Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( sel
 		,["veritas_pd2_env_arm_hcm_02"]	= "Foggy Evening"
 		,["veritas_pd2_env_n2"] 		= "Night"
 		
-		,["veritas_menu_Unknow"]		= "Unknow Contracts"
+		,["veritas_menu_unknow"]		= "Unknow Contracts"
 	})
 	
 	--tweak_data.levels[ level_id ].name_id
