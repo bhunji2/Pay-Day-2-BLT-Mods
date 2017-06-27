@@ -46,32 +46,45 @@ local time_settings = {
 
 	 DNF_NarrativeTweakData_init =		DNF_NarrativeTweakData_init or NarrativeTweakData.init
 function NarrativeTweakData:init(...) 	DNF_NarrativeTweakData_init(self,...)
-	for i , job_id in pairs( self._jobs_index ) do 				--log("//" .. job_id)
-		for i , v in pairs( self.jobs[job_id].chain or {} ) do 	--log("/" .. v.level_id or "") 
-			if v.level_id then self:ParseJobLevelData({ v = v, i = i, job_id = job_id })
-			else 
-				for i2 , v2 in pairs( v or {} ) do
-					if type(v2) == "table" and v2.level_id then 
-						self:ParseJobLevelData({ v = v2, i = i2 + i - 1, job_id = job_id }) 
-					end
-				end
+	for job_id , v in pairs( self.jobs ) do 
+		for i , job_id2 in pairs( self.jobs[job_id].job_wrapper or {} ) do
+			if self.jobs[ job_id2 ].name_id == nil then 
+				self:ParseJob({ tables = self.jobs[job_id2].chain or {} , job_id = job_id , wrapper = true})
 			end
+		end
+	end
+	
+	for job_id , v in pairs( self.jobs ) do 
+		self:ParseJob({ tables = self.jobs[job_id].chain or {} , job_id = job_id })
+	end
+end
+
+function NarrativeTweakData:ParseJob(data)
+	--[[
+	if data.wrapper == true then
+	log("/job_id " .. tostring(data.job_id) .. " //* " .. tostring(#data.tables) .. " */ " .. tostring(GetTableValue(self.jobs[ data.job_id ], "contact")))
+	end
+	--]]
+	for i , v in pairs( data.tables or {} ) do
+		if v.level_id ~= nil then --log("level_id " ..tostring(v.level_id))
+			veritas.levels_data[ v.level_id ] = veritas.levels_data[ v.level_id ] or 
+			{
+				 level_id 		= v.level_id
+				,job_id 		= data.job_id
+				,job_name_id	= GetTableValue(self.jobs[ data.job_id ], "name_id")
+				,stage			= i + ( ( data.i and data.i - 1 ) or 0 )
+				,contact		= GetTableValue(self.jobs[ data.job_id ], "contact")
+			}
+			--if data.wrapper == true then PrintTable(veritas.levels_data[ v.level_id ]) end
+		elseif type(v) == "table" and v.level_id == nil then 
+			self:ParseJob({ tables = v or {} , job_id = data.job_id , i = i })
 		end
 	end
 end
 
-function NarrativeTweakData:ParseJobLevelData(data)
-	local v = data.v
-	veritas.levels_data[ v.level_id ] 				= veritas.levels_data[ v.level_id ] or {}
-	veritas.levels_data[ v.level_id ].level_id 	 	= v.level_id
-	veritas.levels_data[ v.level_id ].job_id	 	= data.job_id
-	veritas.levels_data[ v.level_id ].job_name_id	= self.jobs[ data.job_id ].name_id
-	veritas.levels_data[ v.level_id ].stage		 	= data.i
-	veritas.levels_data[ v.level_id ].contact		= GetTableValue(self.jobs[ data.job_id ], "contact")
-end
-
 	 DNF_LevelsTweakData_init =		DNF_LevelsTweakData_init or LevelsTweakData.init
 function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
+	local 	CustomLoaded = 0
 	for i , level_id in pairs( self._level_index ) do
 		if 		self[ level_id ] 
 		and 	self[ level_id ].name_id 
@@ -84,11 +97,12 @@ function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
 			if 	veritas.options[ level_id ] == 2 then
 					self[ level_id ].env_params = { environment = time_settings[ math.random( 3 , 6 ) ] }
 			else	self[ level_id ].env_params = { environment = time_settings[ veritas.options[ level_id ] ] } end
-			log( "Custom Time Loaded: " .. level_id )
+					CustomLoaded = CustomLoaded + 1
+			--log( "Custom Time Loaded: " .. level_id )
 		end
 	end
+	if CustomLoaded > 0 then log( "/Custom Time Loaded: " .. tostring( CustomLoaded ) ) end
 end
-
 
 -------------------------------------------------------------------------------------------------------------------
 
