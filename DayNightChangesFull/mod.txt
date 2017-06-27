@@ -1,13 +1,13 @@
 {
-	"name" : "DayNight Changes FULL (all heists)",
-	"description" : "Adds all the heists and can be customized with any time setting!"
-	"author" : "\n     Dougley| ➤ Mother_Flowers =TEHCore added in more heist changes \n     Undeadsewer added in a custom menu \n     Tast ReVamped and fix crash bug",
-	"contact" : "\n     Mother_Flowers: https://goo.gl/k38jhf \n     Undeadsewer: https://goo.gl/FbfoJm \n     Tast: ",
-	"version" : "4.5",
-	"priority" : 0,
-	"hooks" : [
-		{	"hook_id" : "lib/tweak_data/NarrativeTweakData",
-			"script_path" : "Loader.lua"
-		}
-	]
+	"name" 			: "DayNight Changes FULL (all heists)",
+	"description" 	: "Adds all the heists and can be customized with any time setting!"
+	"author" 		: 
+		"\n     Dougley| ➤ Mother_Flowers =TEHCore added in more heist changes \n     Undeadsewer added in a custom menu \n     Tast ReVamped and fix crash bug",
+	
+	"contact" 		: 
+		"\n     Mother_Flowers: https://goo.gl/k38jhf \n     Undeadsewer: https://goo.gl/FbfoJm \n     Tast: https://goo.gl/qcyvTq",
+	
+	"version" 		: "4.5",
+	"priority" 		: 0,
+	"hooks" 		: [{ "hook_id" : "lib/tweak_data/NarrativeTweakData" , "script_path" : "Loader.lua" } ]
 }

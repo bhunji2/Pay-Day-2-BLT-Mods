@@ -1,5 +1,5 @@
 
--- revamp by Tast 
+-- revamped by Tast 
 
 veritas = veritas or 
 {
@@ -27,11 +27,7 @@ function veritas:Load()
 end
 veritas:Load()
 
-function veritas:GetLevelsData(level_id, value)
-	if 		veritas.levels_data[ level_id ]  ~= nil
-	then 	return veritas.levels_data[ level_id ][value] end
-	return nil
-end
+--------------------------------------------------------------------------------------------------------------
 
 function GetTableValue(table,value)
 	if table ~= nil then return table[value] end
@@ -221,7 +217,7 @@ for i , v in pairs( PackageList ) do
 	if not PackageManager:loaded(path) then PackageManager:load(path) end
 end
 
-if not PackageManager:load( "levels/narratives/vlad/ukrainian_job/world_sounds" ) then
-	PackageManager:load( "levels/narratives/vlad/ukrainian_job/world_sounds" )
-	PackageManager:load( "levels/narratives/vlad/jewelry_store/world_sounds" )
+if not 	PackageManager:loaded( "levels/narratives/vlad/ukrainian_job/world_sounds" ) then
+		PackageManager:load	 ( "levels/narratives/vlad/ukrainian_job/world_sounds" )
+		PackageManager:load	 ( "levels/narratives/vlad/jewelry_store/world_sounds" )
 end
