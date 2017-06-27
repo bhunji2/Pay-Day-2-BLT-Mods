@@ -37,8 +37,7 @@ end
 --------------------------------------------------------------------------------------------------------------
 
 local time_settings = {
-	"",
-	"",
+	"","",
 	"environments/pd2_env_hox_02/pd2_env_hox_02",
 	"environments/pd2_env_morning_02/pd2_env_morning_02",
 	"environments/pd2_env_arm_hcm_02/pd2_env_arm_hcm_02",
@@ -79,7 +78,8 @@ function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
 		and not self[ level_id ].env_params 
 		then	veritas.levels[ level_id ] = self[ level_id ].name_id end
 		
-		if 		veritas.options[ level_id ] ~= nil
+		if		self[ level_id ] 
+		and		veritas.options[ level_id ] ~= nil
 		and 	veritas.options[ level_id ] ~= 1 then
 			if 	veritas.options[ level_id ] == 2 then
 					self[ level_id ].env_params = { environment = time_settings[ math.random( 3 , 6 ) ] }
@@ -147,7 +147,7 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 		MenuHelper:AddMenuItem	( nodes.lua_mod_options_menu, veritas.main_menu, "veritas_menuTitle", "veritas_menuDesc")
 	
 	for k , v in pairs( veritas.contracts ) do
-		if v then
+		if v == true then
 			local menu_id = veritas.main_menu .. "_" .. k
 			nodes[menu_id] = 
 			MenuHelper:BuildMenu	( menu_id, { area_bg = "half" } )  
@@ -176,9 +176,7 @@ Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( sel
 	--tweak_data.levels[ level_id ].name_id
 	
 	for k , v in pairs( tweak_data.narrative.contacts ) do 
-		self:add_localized_strings({
-			[veritas.main_menu .. "_" .. k] = k .. " Contracts"
-		})
+		self:add_localized_strings({ [veritas.main_menu .. "_" .. k] = k .. " Contracts" })
 	end
 	
 	for level_id , name_id in pairs( veritas.levels ) do 
