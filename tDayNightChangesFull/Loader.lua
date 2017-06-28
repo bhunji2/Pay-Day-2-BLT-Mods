@@ -1,4 +1,3 @@
-
 -- revamped by Tast 
 
 veritas = veritas or 
@@ -26,6 +25,33 @@ function veritas:Load()
 	file:close()
 end
 veritas:Load()
+
+function veritas:LevelsByVal(fValue, tValue)
+	if fValue == "all" then return self.levels end
+	local levels = {}
+	for k , v in pairs( self.levels_data or {} ) do
+		if 		self.levels_data[k][fValue] == tValue 
+		then	levels[v.level_id] = self.levels[v.level_id] end
+	end
+	if levels == {} then return nil end
+	return levels
+	--log(tostring(levels == {} and nil or levels))
+	--return levels == {} and nil or levels
+end
+
+function veritas:SetOptions(target, num, by)
+	--if num == 1 then num = nil end
+	local levels = target or {}
+	if by == "contract" then levels = self:LevelsByVal("contact", target) 	end
+	if by == "all"		then levels = self:LevelsByVal("all")				end
+	
+	for level_id, v in pairs( levels or {} ) do 
+		self.options[level_id] = num
+	end
+	self:Save()
+	
+	return levels
+end
 
 --------------------------------------------------------------------------------------------------------------
 
@@ -67,13 +93,14 @@ function NarrativeTweakData:ParseJob(data)
 	--]]
 	for i , v in pairs( data.tables or {} ) do
 		if v.level_id ~= nil then --log("level_id " ..tostring(v.level_id))
+			--log("/ " .. v.level_id )
 			veritas.levels_data[ v.level_id ] = veritas.levels_data[ v.level_id ] or 
 			{
 				 level_id 		= v.level_id
 				,job_id 		= data.job_id
 				,job_name_id	= GetTableValue(self.jobs[ data.job_id ], "name_id")
 				,stage			= i + ( ( data.i and data.i - 1 ) or 0 )
-				,contact		= GetTableValue(self.jobs[ data.job_id ], "contact")
+				,contact		= GetTableValue(self.jobs[ data.job_id ], "contact") or "unknow"
 			}
 			--if data.wrapper == true then PrintTable(veritas.levels_data[ v.level_id ]) end
 		elseif type(v) == "table" and v.level_id == nil then 
@@ -105,12 +132,43 @@ function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
 end
 
 -------------------------------------------------------------------------------------------------------------------
-
--- managers.menu:open_node("cWIP_options")
+--managers.menu:open_node(veritas.main_menu .. "_" .. type)
 Hooks:Add("MenuManagerInitialize", "tDNCF_MMI", function(menu_manager)
-	MenuCallbackHandler.DNF_Close_Options 	= function(this)  		end
-	MenuCallbackHandler.DNF_Config_Reset 	= function(this, item) 	end
-	MenuCallbackHandler.DNF_ValueSet 		= function(this, item)
+	MenuCallbackHandler.DNF_Close_Options 	= function(self)  		end
+	MenuCallbackHandler.DNF_Config_Reset 	= function(self, item) 	
+		local type = item:name():sub(string.len("veritasID_Reset_") + 1)
+		
+		local levels = {}
+		if   type == "all" 
+		then levels = veritas:SetOptions({}	 , 1, "all")
+		else levels = veritas:SetOptions(type, 1, "contract") end
+		
+		if type == "all" then
+			for k , v in pairs( veritas.contracts or {} ) do 
+				local menu = MenuHelper:GetMenu( veritas.main_menu .. "_" .. k )
+				ResetItems(menu, levels, 1)
+			end
+			return
+		end
+		
+		local menu_id = type == "all" and veritas.main_menu or veritas.main_menu .. "_" .. type
+		local menu = MenuHelper:GetMenu( menu_id )
+		
+		ResetItems(menu, levels, 1)
+	end
+	
+	function ResetItems(menu, levels, value)
+		for k , v in pairs( levels or {} ) do 
+			local item = menu:item("veritasID_" .. k)
+			if   item 
+			then item._current_index = value or 1
+				 item:set_enabled(false)
+				 item:set_enabled(true)
+			end
+		end
+	end
+	
+	MenuCallbackHandler.DNF_ValueSet 		= function(self, item)
 		veritas.options[ item:name():sub(11) ] = item:value()
 		veritas:Save()
 	end
@@ -131,6 +189,18 @@ Hooks:Add("MenuManagerSetupCustomMenus", "tDNCF_MMSC", function( menu_manager, n
 end)
 
 Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, nodes )
+	MenuHelper:AddButton({
+		id 			= "veritasID_Reset_all",
+		title 		= "veritas_Reset_all",
+		desc 		= "veritasDesc_Resetall",
+		callback 	= "DNF_Config_Reset",
+		menu_id 	= veritas.main_menu,
+		priority 	= 100,
+		localized	= true
+	})
+	
+	MenuHelper:AddDivider({ id = "veritasID_divider_main", size = 20, menu_id = veritas.main_menu, priority = 99 })
+	
 	for level_id , name_id in pairs( veritas.levels ) do
 		local contract	= GetTableValue(veritas.levels_data[ level_id ],"contact") or "unknow"
 		local menu_id 	= veritas.main_menu .. "_" .. contract
@@ -163,11 +233,28 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 	for k , v in pairs( veritas.contracts ) do
 		if v == true then
 			local menu_id = veritas.main_menu .. "_" .. k
+			
+			MenuHelper:AddButton({
+				id 			= "veritasID_Reset_" 	.. k,
+				--title 		= "veritas_Reset_" 		.. k,
+				--desc 		= "veritasDesc_Reset_" 	.. k,
+				title 		= "veritas_Reset_all",
+				desc 		= "veritasDesc_Resetall",
+				callback 	= "DNF_Config_Reset",
+				menu_id 	= menu_id,
+				priority 	= 100,
+				localized	= true
+			})
+			
+			MenuHelper:AddDivider({ id = "veritasID_divider_" .. k, size = 20, menu_id = menu_id,priority = 99 })
+			
 			nodes[menu_id] = 
 			MenuHelper:BuildMenu	( menu_id, { area_bg = "half" } )  
 			MenuHelper:AddMenuItem	( nodes[veritas.main_menu], menu_id, menu_id, "veritas_menuDesc")
 		end
 	end
+
+	--nodes[veritas.main_menu]["_items"][1]["_parameters"].color = "Color(1 * (0.94902, 0.94902, 0.313726))"
 end)
 
 --------------------------------------------------------------------------------------------------------------
@@ -185,6 +272,8 @@ Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( sel
 		,["veritas_pd2_env_n2"] 		= "Night"
 		
 		,["veritas_menu_unknow"]		= "Unknow Contracts"
+		,["veritas_Reset_all"]			= "Reset All DayNight"
+		,["veritasDesc_Resetall"]		= "set all to default"
 	})
 	
 	--tweak_data.levels[ level_id ].name_id
