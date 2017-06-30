@@ -304,7 +304,7 @@ end)
 Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( self )
 	self:add_localized_strings({
 		 ["veritas_menuTitle"] 			= "Day/Night Changes"
-		,["veritas_menuDesc"] 			= "Change the day/night cycles for certain heists!\nGame Restart Required."
+		,["veritas_menuDesc"] 			= "Change the day/night cycles for certain heists!"
 		
 		,["veritas_default"] 			= "Default"
 		,["veritas_random"] 			= "Random"
