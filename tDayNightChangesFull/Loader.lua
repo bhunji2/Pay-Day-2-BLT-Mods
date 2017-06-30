@@ -59,23 +59,21 @@ function GetTableValue(table,value)
 	if table ~= nil then return table[value] end
 	return nil
 end
-
+--[[
+function PrintTableNameList(table)
+	for k , v in pairs(table) do
+		log("/ " .. tostring(k) .. " /// " .. tostring(v) )
+	end
+end
+--]]
 --------------------------------------------------------------------------------------------------------------
-
-local time_settings = {
-	"","",
-	"environments/pd2_env_hox_02/pd2_env_hox_02",
-	"environments/pd2_env_morning_02/pd2_env_morning_02",
-	"environments/pd2_env_arm_hcm_02/pd2_env_arm_hcm_02",
-	"environments/pd2_env_n2/pd2_env_n2"
-}
 
 	 DNF_NarrativeTweakData_init =		DNF_NarrativeTweakData_init or NarrativeTweakData.init
 function NarrativeTweakData:init(...) 	DNF_NarrativeTweakData_init(self,...)
 	for job_id , v in pairs( self.jobs ) do 
 		for i , job_id2 in pairs( self.jobs[job_id].job_wrapper or {} ) do
 			if self.jobs[ job_id2 ].name_id == nil then 
-				self:ParseJob({ tables = self.jobs[job_id2].chain or {} , job_id = job_id , wrapper = true})
+				self:ParseJob({ tables = self.jobs[job_id2].chain or {} , job_id = job_id })
 			end
 		end
 	end
@@ -86,11 +84,6 @@ function NarrativeTweakData:init(...) 	DNF_NarrativeTweakData_init(self,...)
 end
 
 function NarrativeTweakData:ParseJob(data)
-	--[[
-	if data.wrapper == true then
-	log("/job_id " .. tostring(data.job_id) .. " //* " .. tostring(#data.tables) .. " */ " .. tostring(GetTableValue(self.jobs[ data.job_id ], "contact")))
-	end
-	--]]
 	for i , v in pairs( data.tables or {} ) do
 		if v.level_id ~= nil then --log("level_id " ..tostring(v.level_id))
 			--log("/ " .. v.level_id )
@@ -102,27 +95,68 @@ function NarrativeTweakData:ParseJob(data)
 				,stage			= i + ( ( data.i and data.i - 1 ) or 0 )
 				,contact		= GetTableValue(self.jobs[ data.job_id ], "contact") or "unknow"
 			}
-			--if data.wrapper == true then PrintTable(veritas.levels_data[ v.level_id ]) end
 		elseif type(v) == "table" and v.level_id == nil then 
 			self:ParseJob({ tables = v or {} , job_id = data.job_id , i = i })
 		end
 	end
 end
 
+local time_settings = 
+{ "",""
+	,"environments/pd2_env_hox_02/pd2_env_hox_02"			--凌晨
+	,"environments/pd2_env_morning_02/pd2_env_morning_02"	--早上
+	,"environments/pd2_env_arm_hcm_02/pd2_env_arm_hcm_02"	--霧夜
+	,"environments/pd2_env_n2/pd2_env_n2"					--晚上
+	
+	,"environments/pd2_env_mid_day/pd2_env_mid_day"			--正午
+	,"environments/pd2_env_afternoon/pd2_env_afternoon"		--下午
+	,"environments/pd2_env_foggy_bright/pd2_env_foggy_bright"--霧夜亮
+}
+
+local Time_Menu_Items = 
+{
+	 "veritas_default"
+	,"veritas_random"
+	,"veritas_pd2_env_hox_02"
+	,"veritas_pd2_env_morning_02"
+	,"veritas_pd2_env_arm_hcm_02"
+	,"veritas_pd2_env_n2"
+	
+	,"veritas_pd2_env_mid_day"
+	,"veritas_pd2_env_afternoon"
+	,"veritas_pd2_env_foggy_bright"
+}
+
 	 DNF_LevelsTweakData_init =		DNF_LevelsTweakData_init or LevelsTweakData.init
 function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
 	local 	CustomLoaded = 0
 	for i , level_id in pairs( self._level_index ) do
+		-- Get levels id
 		if 		self[ level_id ] 
 		and 	self[ level_id ].name_id 
-		and not self[ level_id ].env_params 
+		--and not self[ level_id ].env_params 
 		then	veritas.levels[ level_id ] = self[ level_id ].name_id end
-		
+	end
+	self:VeritasSet()
+end
+
+function LevelsTweakData:VeritasSet()
+	local 	CustomLoaded = 0
+	for i , level_id in pairs( self._level_index ) do
+		-- Override Set
 		if		self[ level_id ] 
+		and		veritas.options[ "override" ] ~= nil
+		and 	veritas.options[ "override" ] >  1 then	
+			if 	veritas.options[ "override" ] == 2 then
+					self[ level_id ].env_params = { environment = time_settings[ math.random( 3 , #time_settings ) ] }
+			else	self[ level_id ].env_params = { environment = time_settings[ veritas.options[ "override" ] or 1 ] } end
+		--end
+		-- set per map
+		elseif	self[ level_id ] 
 		and		veritas.options[ level_id ] ~= nil
 		and 	veritas.options[ level_id ] ~= 1 then
 			if 	veritas.options[ level_id ] == 2 then
-					self[ level_id ].env_params = { environment = time_settings[ math.random( 3 , 6 ) ] }
+					self[ level_id ].env_params = { environment = time_settings[ math.random( 3 , #time_settings ) ] }
 			else	self[ level_id ].env_params = { environment = time_settings[ veritas.options[ level_id ] ] } end
 					CustomLoaded = CustomLoaded + 1
 			--log( "Custom Time Loaded: " .. level_id )
@@ -134,7 +168,10 @@ end
 -------------------------------------------------------------------------------------------------------------------
 --managers.menu:open_node(veritas.main_menu .. "_" .. type)
 Hooks:Add("MenuManagerInitialize", "tDNCF_MMI", function(menu_manager)
-	MenuCallbackHandler.DNF_Close_Options 	= function(self)  		end
+	MenuCallbackHandler.DNF_Close_Options 	= function(self)
+		--log("// DNF_Close_Options")
+		tweak_data.levels:VeritasSet()
+	end
 	MenuCallbackHandler.DNF_Config_Reset 	= function(self, item) 	
 		local type = item:name():sub(string.len("veritasID_Reset_") + 1)
 		
@@ -143,12 +180,13 @@ Hooks:Add("MenuManagerInitialize", "tDNCF_MMI", function(menu_manager)
 		then levels = veritas:SetOptions({}	 , 1, "all")
 		else levels = veritas:SetOptions(type, 1, "contract") end
 		
+		levels["override"] = ""
+		
 		if type == "all" then
 			for k , v in pairs( veritas.contracts or {} ) do 
 				local menu = MenuHelper:GetMenu( veritas.main_menu .. "_" .. k )
 				ResetItems(menu, levels, 1)
 			end
-			return
 		end
 		
 		local menu_id = type == "all" and veritas.main_menu or veritas.main_menu .. "_" .. type
@@ -157,14 +195,13 @@ Hooks:Add("MenuManagerInitialize", "tDNCF_MMI", function(menu_manager)
 		ResetItems(menu, levels, 1)
 	end
 	
-	function ResetItems(menu, levels, value)
-		for k , v in pairs( levels or {} ) do 
+	function ResetItems(menu, items, value)
+		for k , v in pairs( items or {} ) do 
 			local item = menu:item("veritasID_" .. k)
 			if   item 
 			then item._current_index = value or 1
-				 item:set_enabled(false)
-				 item:set_enabled(true)
-			end
+				 item:dirty()
+			end--item:set_enabled(false)
 		end
 	end
 	
@@ -199,7 +236,19 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 		localized	= true
 	})
 	
-	MenuHelper:AddDivider({ id = "veritasID_divider_main", size = 20, menu_id = veritas.main_menu, priority = 99 })
+	MenuHelper:AddMultipleChoice( {
+		id 			= "veritasID_override",
+		title 		= "veritas_override",
+		desc 		= "veritasDesc_override",
+		callback 	= "DNF_ValueSet",
+		items 		= Time_Menu_Items,
+		menu_id 	= veritas.main_menu,
+		value 		= veritas.options[ "override" ] or 1,
+		priority 	= 99,
+		localized	= true
+	} )
+	
+	MenuHelper:AddDivider({ id = "veritasID_divider_main", size = 20, menu_id = veritas.main_menu, priority = 98 })
 	
 	for level_id , name_id in pairs( veritas.levels ) do
 		local contract	= GetTableValue(veritas.levels_data[ level_id ],"contact") or "unknow"
@@ -212,14 +261,7 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 			title 		= "veritas_" 		.. level_id,
 			desc 		= "veritasDesc_" 	.. level_id,
 			callback 	= "DNF_ValueSet",
-			items 		= {
-							"veritas_default",
-							"veritas_random",
-							"veritas_pd2_env_hox_02",
-							"veritas_pd2_env_morning_02",
-							"veritas_pd2_env_arm_hcm_02",
-							"veritas_pd2_env_n2",
-						  },
+			items 		= Time_Menu_Items,
 			menu_id 	= menu_id,
 			value 		= veritas.options[ level_id ] or 1,
 			localized	= true
@@ -227,7 +269,7 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 	end
 	
 	nodes[veritas.main_menu] = 
-		MenuHelper:BuildMenu	( veritas.main_menu, { area_bg = "half" } )  
+		MenuHelper:BuildMenu	( veritas.main_menu, { area_bg = "none" , back_callback = "DNF_Close_Options" } )  
 		MenuHelper:AddMenuItem	( nodes.lua_mod_options_menu, veritas.main_menu, "veritas_menuTitle", "veritas_menuDesc")
 	
 	for k , v in pairs( veritas.contracts ) do
@@ -262,7 +304,7 @@ end)
 Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( self )
 	self:add_localized_strings({
 		 ["veritas_menuTitle"] 			= "Day/Night Changes"
-		,["veritas_menuDesc"] 			= "Change the day/night cycles for certain heists!"
+		,["veritas_menuDesc"] 			= "Change the day/night cycles for certain heists!\nGame Restart Required."
 		
 		,["veritas_default"] 			= "Default"
 		,["veritas_random"] 			= "Random"
@@ -271,9 +313,15 @@ Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( sel
 		,["veritas_pd2_env_arm_hcm_02"]	= "Foggy Evening"
 		,["veritas_pd2_env_n2"] 		= "Night"
 		
+		,["veritas_pd2_env_mid_day"] 		= "Mid Day"
+		,["veritas_pd2_env_afternoon"] 		= "AfterNoon"
+		,["veritas_pd2_env_foggy_bright"] 	= "Foggy Bright Evening"
+		
 		,["veritas_menu_unknow"]		= "Unknow Contracts"
 		,["veritas_Reset_all"]			= "Reset All DayNight"
 		,["veritasDesc_Resetall"]		= "set all to default"
+		,["veritas_override"]			= "override"
+		,["veritasDesc_override"]		= "This option will override all map's Day/Night\nUnless set it to default."
 	})
 	
 	--tweak_data.levels[ level_id ].name_id
@@ -312,11 +360,16 @@ local PackageBase = "levels/instances/unique/"
 local PackageList =
 {
 	 "hlm_random_right003"
-	,"hox_fbi_armory"
-	,"hlm_vault"
 	,"hlm_gate_base"
-	,"hlm_reader"
 	,"hlm_door_wooden_white_green"
+	
+	,"hox_fbi_armory"		--early Morning
+	,"hlm_reader" 			--pd2_env_morning_02
+	,"hlm_vault"			--pd2_env_arm_hcm_02
+	
+	,"mus_security_barrier" --pd2_env_mid_day
+	,"hlm_box_contraband001"--pd2_env_afternoon
+	,"san_box_tree001"		--pd2_env_foggy_bright
 }
 
 for i , v in pairs( PackageList ) do
