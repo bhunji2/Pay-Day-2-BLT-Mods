@@ -12,17 +12,22 @@ veritas = veritas or
 }
 
 function veritas:Save()
-	local  	file = io.open( self.save_path, "w+" )
+	--local  	file = io.open( self.save_path, "w+" )
+	local  	file = SystemFS:open( self.save_path, "w" )
+	
 	if not 	file then return end
 	file:write( json.encode( self.options ) )
 	file:close()
+	--SystemFS:close(file)
 end
 
 function veritas:Load()
-	local 	file = io.open( self.save_path, "r" )
+	--local 	file = io.open( self.save_path, "r" )
+	local 	file = SystemFS:open( self.save_path, "r" )
 	if not 	file then return end
 	self.options = json.decode( file:read("*all") )
 	file:close()
+	--SystemFS:close(file)
 end
 veritas:Load()
 
@@ -354,7 +359,6 @@ function CheckLoadPackage(path)
 	then 	PackageManager:load  ( path ) end
 end
 
-local PackageBase = "levels/instances/unique/"
 local PackageList =
 {
 	 "narratives/vlad/ukrainian_job/world_sounds"
@@ -363,7 +367,7 @@ local PackageList =
 
 for i , v in pairs( PackageList ) do CheckLoadPackage( "levels/" .. v ) end
 for i = 3 , #Time_Data , 1 do 
-	local 	path = PackageBase .. Time_Data[i][2] 
+	local 	path = "levels/instances/unique/" .. Time_Data[i][2] 
 	if string.find(Time_Data[i][2],"%/") then
 			path = "levels/narratives/" .. Time_Data[i][2]
 	end
