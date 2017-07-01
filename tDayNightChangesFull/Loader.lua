@@ -1,5 +1,5 @@
 -- revamped by Tast 
-
+--log("/Day Night Loader")
 veritas = veritas or 
 {
 	 mod_path 	= ModPath
@@ -101,31 +101,32 @@ function NarrativeTweakData:ParseJob(data)
 	end
 end
 
-local time_settings = 
-{ "",""
-	,"environments/pd2_env_hox_02/pd2_env_hox_02"			--凌晨
-	,"environments/pd2_env_morning_02/pd2_env_morning_02"	--早上
-	,"environments/pd2_env_arm_hcm_02/pd2_env_arm_hcm_02"	--霧夜
-	,"environments/pd2_env_n2/pd2_env_n2"					--晚上
+local Time_Data = 
+{
+	 {"default","","Default"}
+	,{"random" ,"","Random" }
+	,{"pd2_env_hox_02"		,"hox_fbi_armory"				,"Early Morning"} --凌晨
+	,{"pd2_env_morning_02"	,"hlm_reader"					,"Morning"		} --早上    		
+	,{"pd2_env_arm_hcm_02"	,"hlm_vault"					,"Foggy Evening"} --霧夜   	
+	,{"pd2_env_n2"			,"hlm_door_wooden_white_green"	,"Night"		} --晚上   			
 	
-	,"environments/pd2_env_mid_day/pd2_env_mid_day"			--正午
-	,"environments/pd2_env_afternoon/pd2_env_afternoon"		--下午
-	,"environments/pd2_env_foggy_bright/pd2_env_foggy_bright"--霧夜亮
+	,{"pd2_env_mid_day"		,"mus_security_barrier"			,"Mid Day"		} --正午   			
+	,{"pd2_env_afternoon"	,"hlm_box_contraband001"		,"AfterNoon"	} --下午   
+	,{"pd2_env_foggy_bright","san_box001"					,"Foggy Bright Evening"} --亮霧夜 
+	,{"pd2_env_docks"		,"hlm_random_right003"			,"Cloudy Day"	} --陰天
+	
+	,{"pd2_indiana_basement","dentist/mus"					,"Foggy Day" 	} --白天霧
+	,{"pd2_indiana_diamond_room","dentist/mus"				,"Sunset" 		} --夕陽
+	,{"env_cage_tunnels_02"	,"bain/cage"					,"Sunny"		} --夕陽前晴朗
+	
+--	,{"pd2_env_hox_02","ssssssssssssss"} 
 }
 
-local Time_Menu_Items = 
-{
-	 "veritas_default"
-	,"veritas_random"
-	,"veritas_pd2_env_hox_02"
-	,"veritas_pd2_env_morning_02"
-	,"veritas_pd2_env_arm_hcm_02"
-	,"veritas_pd2_env_n2"
-	
-	,"veritas_pd2_env_mid_day"
-	,"veritas_pd2_env_afternoon"
-	,"veritas_pd2_env_foggy_bright"
-}
+function Time_Menu_Items()
+	local data = {}
+	for i , v in pairs( Time_Data ) do table.insert(data,"veritas_" ..v[1]) end
+	return data
+end
 
 	 DNF_LevelsTweakData_init =		DNF_LevelsTweakData_init or LevelsTweakData.init
 function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
@@ -143,35 +144,33 @@ end
 function LevelsTweakData:VeritasSet()
 	local 	CustomLoaded = 0
 	for i , level_id in pairs( self._level_index ) do
-		-- Override Set
-		if		self[ level_id ] 
-		and		veritas.options[ "override" ] ~= nil
-		and 	veritas.options[ "override" ] >  1 then	
-			if 	veritas.options[ "override" ] == 2 then
-					self[ level_id ].env_params = { environment = time_settings[ math.random( 3 , #time_settings ) ] }
-			else	self[ level_id ].env_params = { environment = time_settings[ veritas.options[ "override" ] or 1 ] } end
-		--end
-		-- set per map
-		elseif	self[ level_id ] 
-		and		veritas.options[ level_id ] ~= nil
-		and 	veritas.options[ level_id ] ~= 1 then
-			if 	veritas.options[ level_id ] == 2 then
-					self[ level_id ].env_params = { environment = time_settings[ math.random( 3 , #time_settings ) ] }
-			else	self[ level_id ].env_params = { environment = time_settings[ veritas.options[ level_id ] ] } end
-					CustomLoaded = CustomLoaded + 1
-			--log( "Custom Time Loaded: " .. level_id )
+		local envName = false
+		local options = veritas.options[  level_id  ] or 1
+		local override= veritas.options[ "override" ] or 1
+		
+		if options  > 2 then envName = Time_Data[ options  ][1] end
+		if override > 2 then envName = Time_Data[ override ][1] end
+		if options == 2 or override == 2 then
+			envName = Time_Data[ math.random( 3 , #Time_Data ) ][1] 
+		end
+		
+		if  self[ level_id ] ~= nil and self[ level_id ] ~= {}
+		and envName ~= false 		and type(envName) == "string" then
+			envName = "environments/" .. envName .. "/" .. envName
+			self[ level_id ].env_params = { environment = envName }
+			CustomLoaded = CustomLoaded + 1
 		end
 	end
-	if CustomLoaded > 0 then log( "/Custom Time Loaded: " .. tostring( CustomLoaded ) ) end
+	if CustomLoaded > 0 then log( "/Custom DayNight Loaded: " .. tostring( CustomLoaded ) ) end
 end
 
 -------------------------------------------------------------------------------------------------------------------
 --managers.menu:open_node(veritas.main_menu .. "_" .. type)
 Hooks:Add("MenuManagerInitialize", "tDNCF_MMI", function(menu_manager)
 	MenuCallbackHandler.DNF_Close_Options 	= function(self)
-		--log("// DNF_Close_Options")
 		tweak_data.levels:VeritasSet()
 	end
+	
 	MenuCallbackHandler.DNF_Config_Reset 	= function(self, item) 	
 		local type = item:name():sub(string.len("veritasID_Reset_") + 1)
 		
@@ -241,7 +240,7 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 		title 		= "veritas_override",
 		desc 		= "veritasDesc_override",
 		callback 	= "DNF_ValueSet",
-		items 		= Time_Menu_Items,
+		items 		= Time_Menu_Items(),
 		menu_id 	= veritas.main_menu,
 		value 		= veritas.options[ "override" ] or 1,
 		priority 	= 99,
@@ -261,7 +260,7 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 			title 		= "veritas_" 		.. level_id,
 			desc 		= "veritasDesc_" 	.. level_id,
 			callback 	= "DNF_ValueSet",
-			items 		= Time_Menu_Items,
+			items 		= Time_Menu_Items(),
 			menu_id 	= menu_id,
 			value 		= veritas.options[ level_id ] or 1,
 			localized	= true
@@ -305,18 +304,6 @@ Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( sel
 	self:add_localized_strings({
 		 ["veritas_menuTitle"] 			= "Day/Night Changes"
 		,["veritas_menuDesc"] 			= "Change the day/night cycles for certain heists!"
-		
-		,["veritas_default"] 			= "Default"
-		,["veritas_random"] 			= "Random"
-		,["veritas_pd2_env_hox_02"] 	= "Early Morning"
-		,["veritas_pd2_env_morning_02"]	= "Morning"
-		,["veritas_pd2_env_arm_hcm_02"]	= "Foggy Evening"
-		,["veritas_pd2_env_n2"] 		= "Night"
-		
-		,["veritas_pd2_env_mid_day"] 		= "Mid Day"
-		,["veritas_pd2_env_afternoon"] 		= "AfterNoon"
-		,["veritas_pd2_env_foggy_bright"] 	= "Foggy Bright Evening"
-		
 		,["veritas_menu_unknow"]		= "Unknow Contracts"
 		,["veritas_Reset_all"]			= "Reset All DayNight"
 		,["veritasDesc_Resetall"]		= "set all to default"
@@ -324,7 +311,9 @@ Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( sel
 		,["veritasDesc_override"]		= "This option will override all map's Day/Night\nUnless set it to default."
 	})
 	
-	--tweak_data.levels[ level_id ].name_id
+	for i , v in pairs( Time_Data ) do 
+		self:add_localized_strings({ [ "veritas_"..v[1] ] = v[3] })
+	end
 	
 	for k , v in pairs( tweak_data.narrative.contacts ) do 
 		self:add_localized_strings({ [veritas.main_menu .. "_" .. k] = k .. " Contracts" })
@@ -356,28 +345,27 @@ Hooks:Add( "LocalizationManagerPostInit" , "veritasLocalization" , function( sel
 end )
 
 --------------------------------------------------------------------------------------------------------------
+-- PackageManager -unit_data -editor -has -reload -script_data -loaded -load
+function CheckLoadPackage(path)
+	--log("/CheckLoadPackage " .. path)
+	--PackageManager:has( Idstring("world"),Idstring(path) )
+	if		PackageManager:package_exists( path )
+	and not PackageManager:loaded( path ) 
+	then 	PackageManager:load  ( path ) end
+end
+
 local PackageBase = "levels/instances/unique/"
 local PackageList =
 {
-	 "hlm_random_right003"
-	,"hlm_gate_base"
-	,"hlm_door_wooden_white_green"
-	
-	,"hox_fbi_armory"		--early Morning
-	,"hlm_reader" 			--pd2_env_morning_02
-	,"hlm_vault"			--pd2_env_arm_hcm_02
-	
-	,"mus_security_barrier" --pd2_env_mid_day
-	,"hlm_box_contraband001"--pd2_env_afternoon
-	,"san_box_tree001"		--pd2_env_foggy_bright
+	 "narratives/vlad/ukrainian_job/world_sounds"
+	,"narratives/vlad/jewelry_store/world_sounds"
 }
 
-for i , v in pairs( PackageList ) do
-	local  path = PackageBase .. v .. "/world"
-	if not PackageManager:loaded(path) then PackageManager:load(path) end
-end
-
-if not 	PackageManager:loaded( "levels/narratives/vlad/ukrainian_job/world_sounds" ) then
-		PackageManager:load	 ( "levels/narratives/vlad/ukrainian_job/world_sounds" )
-		PackageManager:load	 ( "levels/narratives/vlad/jewelry_store/world_sounds" )
+for i , v in pairs( PackageList ) do CheckLoadPackage( "levels/" .. v ) end
+for i = 3 , #Time_Data , 1 do 
+	local 	path = PackageBase .. Time_Data[i][2] 
+	if string.find(Time_Data[i][2],"%/") then
+			path = "levels/narratives/" .. Time_Data[i][2]
+	end
+	CheckLoadPackage( path .. "/world" ) 
 end
