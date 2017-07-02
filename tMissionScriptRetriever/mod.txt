@@ -3,7 +3,7 @@
 	,"description" 	: "Mission Script Retriever \n Dump Mission Script to game folder \n press key after map loaded."
 	,"author" 		: "hejoro , BLT keypress version by Tast"
 	,"contact" 		: "https://goo.gl/VUXZKz"
-	,"version" 		: "1.3"
+	,"version" 		: "1.4"
 	,"hooks": 
 	[
 	 { "hook_id" : "lib/managers/missionmanager" , "script_path" : "tMissionScriptRetriever.lua" }

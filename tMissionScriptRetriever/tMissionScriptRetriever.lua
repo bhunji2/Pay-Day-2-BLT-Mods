@@ -767,7 +767,7 @@ end
 function MissionManager:WriteRetriever(_type)
 	local Contact	= managers.job:current_contact_id()
 	local JobName	= managers.job:current_job_data().name_id
-	local JobLoc	= Localizer:lookup(Idstring(JobName))
+	local JobLoc	= Localizer:exists(Idstring(JobName)) and Localizer:lookup(Idstring(JobName)) or ""
 	local JobLoc2	= managers.localization:text(JobName)
 	local LevelName	= "." .. managers.job:current_level_id()
 	local StageNum	= "" or "." .. tostring(managers.job:current_stage())
@@ -791,30 +791,3 @@ function MissionManager:WriteRetriever(_type)
 	
 	return true
 end
-
---[[
-tMSR_MM_STS = tMSR_MM_STS or MissionManager._serialize_to_script
-function MissionManager:WriteRetriever()
-	local node	 = tMSR_MM_STS(self, "mission", self.Retriever.file_path )
-	local script = deep_clone( node )
-	local levelID= managers.job:current_level_id()
-	local dirPath= "mission_scripts/".. levelID .. "/"
-	
-	SystemFS:make_dir("mission_scripts")
-	SystemFS:make_dir("mission_scripts/" .. levelID)
-	
-	local  file = io.open(dirPath .. "_all.json", "w")
-	if not file then return false end
-	
-	file:write(JSON:encode_pretty(script))
-	file:close()
-	
-	for k,v in pairs(script) do
-		local file = io.open(dirPath .. k .. ".json", "w")
-		file:write(JSON:encode_pretty(v))
-		file:close()
-	end
-	
-	return script
-end
-]]
