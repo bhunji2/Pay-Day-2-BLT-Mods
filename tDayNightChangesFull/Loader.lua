@@ -12,22 +12,17 @@ veritas = veritas or
 }
 
 function veritas:Save()
-	--local  	file = io.open( self.save_path, "w+" )
 	local  	file = SystemFS:open( self.save_path, "w" )
-	
-	if not 	file then return end
+	if not 	file or tostring(file):find("NullScriptFile") then return end
 	file:write( json.encode( self.options ) )
 	file:close()
-	--SystemFS:close(file)
 end
 
 function veritas:Load()
-	--local 	file = io.open( self.save_path, "r" )
 	local 	file = SystemFS:open( self.save_path, "r" )
-	if not 	file then return end
-	self.options = json.decode( file:read("*all") )
+	if not 	file or tostring(file):find("NullScriptFile") then return end
+	self.options = json.decode( file:read("*all"):gsub("%[%]","{}") )
 	file:close()
-	--SystemFS:close(file)
 end
 veritas:Load()
 
@@ -64,6 +59,7 @@ function GetTableValue(table,value)
 	if table ~= nil then return table[value] end
 	return nil
 end
+
 --[[
 function PrintTableNameList(table)
 	for k , v in pairs(table) do
@@ -124,6 +120,7 @@ local Time_Data =
 	,{"pd2_indiana_diamond_room","dentist/mus"				,"Sunset" 		} --夕陽
 	,{"env_cage_tunnels_02"	,"bain/cage"					,"Sunny"		} --夕陽前晴朗
 	
+	--,{"env_0200_night_moon_stars","crojob\burning_barrel","test"} 
 --	,{"pd2_env_hox_02","ssssssssssssss"} 
 }
 
@@ -281,9 +278,7 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 			local menu_id = veritas.main_menu .. "_" .. k
 			
 			MenuHelper:AddButton({
-				id 			= "veritasID_Reset_" 	.. k,
-				--title 		= "veritas_Reset_" 		.. k,
-				--desc 		= "veritasDesc_Reset_" 	.. k,
+				id 			= "veritasID_Reset_" .. k,
 				title 		= "veritas_Reset_all",
 				desc 		= "veritasDesc_Resetall",
 				callback 	= "DNF_Config_Reset",
@@ -299,8 +294,6 @@ Hooks:Add("MenuManagerBuildCustomMenus", "tDNCF_MMBCM", function( menu_manager, 
 			MenuHelper:AddMenuItem	( nodes[veritas.main_menu], menu_id, menu_id, "veritas_menuDesc")
 		end
 	end
-
-	--nodes[veritas.main_menu]["_items"][1]["_parameters"].color = "Color(1 * (0.94902, 0.94902, 0.313726))"
 end)
 
 --------------------------------------------------------------------------------------------------------------
@@ -352,13 +345,13 @@ end )
 --------------------------------------------------------------------------------------------------------------
 -- PackageManager -unit_data -editor -has -reload -script_data -loaded -load
 function CheckLoadPackage(path)
-	--log("/CheckLoadPackage " .. path)
 	--PackageManager:has( Idstring("world"),Idstring(path) )
+	--log("// " .. path .. " - " .. tostring(PackageManager:package_exists( path )))
 	if		PackageManager:package_exists( path )
 	and not PackageManager:loaded( path ) 
 	then 	PackageManager:load  ( path ) end
 end
-
+--[[
 local PackageList =
 {
 	 "narratives/vlad/ukrainian_job/world_sounds"
@@ -366,10 +359,13 @@ local PackageList =
 }
 
 for i , v in pairs( PackageList ) do CheckLoadPackage( "levels/" .. v ) end
+--]]
+
 for i = 3 , #Time_Data , 1 do 
 	local 	path = "levels/instances/unique/" .. Time_Data[i][2] 
 	if string.find(Time_Data[i][2],"%/") then
 			path = "levels/narratives/" .. Time_Data[i][2]
 	end
-	CheckLoadPackage( path .. "/world" ) 
+	CheckLoadPackage( path:gsub("\b","/b") .. "/world" ) 
 end
+
