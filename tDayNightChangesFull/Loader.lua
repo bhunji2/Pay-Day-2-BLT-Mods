@@ -66,6 +66,8 @@ function PrintTableNameList(table)
 		log("/ " .. tostring(k) .. " /// " .. tostring(v) )
 	end
 end
+
+function escape_pattern(text) return text:gsub("([^%w])", "%%%1") end
 --]]
 --------------------------------------------------------------------------------------------------------------
 
@@ -106,6 +108,7 @@ local Time_Data =
 {
 	 {"default","","Default"}
 	,{"random" ,"","Random" }
+	
 	,{"pd2_env_hox_02"		,"hox_fbi_armory"				,"Early Morning"} --凌晨
 	,{"pd2_env_morning_02"	,"hlm_reader"					,"Morning"		} --早上    		
 	,{"pd2_env_arm_hcm_02"	,"hlm_vault"					,"Foggy Evening"} --霧夜   	
@@ -118,7 +121,7 @@ local Time_Data =
 	
 	,{"pd2_indiana_basement","dentist/mus"					,"Foggy Day" 	} --白天霧
 	,{"pd2_indiana_diamond_room","dentist/mus"				,"Sunset" 		} --夕陽
-	,{"env_cage_tunnels_02"	,"bain/cage"					,"Sunny"		} --夕陽前晴朗
+	--,{"env_cage_tunnels_02"	,"bain/cage"					,"Sunny"		} --夕陽前晴朗
 	
 	--,{"env_0200_night_moon_stars","crojob\burning_barrel","test"} 
 --	,{"pd2_env_hox_02","ssssssssssssss"} 
@@ -134,7 +137,7 @@ end
 function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
 	local 	CustomLoaded = 0
 	for i , level_id in pairs( self._level_index ) do
-		-- Get levels id
+		-- Get levels iddw
 		if 		self[ level_id ] 
 		and 	self[ level_id ].name_id 
 		--and not self[ level_id ].env_params 
@@ -345,8 +348,8 @@ end )
 --------------------------------------------------------------------------------------------------------------
 -- PackageManager -unit_data -editor -has -reload -script_data -loaded -load
 function CheckLoadPackage(path)
-	--PackageManager:has( Idstring("world"),Idstring(path) )
-	--log("// " .. path .. " - " .. tostring(PackageManager:package_exists( path )))
+	--PackageManager:has( Idstring("world"),Idstring(path) ) -- equal to loaded but need extension name
+	log("// " .. path .. " - " .. tostring(PackageManager:package_exists( path )))
 	if		PackageManager:package_exists( path )
 	and not PackageManager:loaded( path ) 
 	then 	PackageManager:load  ( path ) end
@@ -361,11 +364,41 @@ local PackageList =
 for i , v in pairs( PackageList ) do CheckLoadPackage( "levels/" .. v ) end
 --]]
 
-for i = 3 , #Time_Data , 1 do 
-	local 	path = "levels/instances/unique/" .. Time_Data[i][2] 
-	if string.find(Time_Data[i][2],"%/") then
-			path = "levels/narratives/" .. Time_Data[i][2]
-	end
-	CheckLoadPackage( path:gsub("\b","/b") .. "/world" ) 
+-- http://hyperpolyglot.org/more
+--[[
+function escape_pattern(text)
+	return text
+	:gsub("\a","\\a"):gsub("\a","\\a"):gsub("\b","\\b"):gsub("\f","\\f"):gsub("\n","\\n")
+	:gsub("\r","\\r"):gsub("\t","\\t"):gsub("\v","\\v"):gsub("\"",'\\"'):gsub("\'","\\'")
 end
+]]
+local texti = "\b"
+--log("// " .. texti:gsub("\\","/"))
+--log(escape_pattern(texti):gsub("\\([a-z])","/%1"))
+--[[
+for i = 3 , #Time_Data , 1 do 
+	local path = "levels/" .. (Time_Data[i][2]:find("%/") and "narratives/" or "instances/unique/")
+	
+	--CheckLoadPackage(  .. path:gsub("\b","/b") .. Time_Data[i][2] .. "/world" ) 
+	CheckLoadPackage( "levels/" .. (Time_Data[i][2]:find("%/") and "narratives/" or "instances/unique/") .. Time_Data[i][2] .. "/world" )
+end
+--]]
+for i = 3 , #Time_Data , 1 do 
+	local path = Time_Data[i][2]:find("%/") and "narratives/" or "instances/unique/"
+	CheckLoadPackage( "levels/" .. path:gsub("\b","/b") .. Time_Data[i][2] .. "/world" ) 
+	
+	
+	--[[
+	local envName = "environments/" .. Time_Data[i][1] .. "/" .. Time_Data[i][1]
+	local has = PackageManager:has( Idstring("environment"),Idstring(envName) )
+	log("/ " .. envName .. " - " .. tostring(PackageManager:package_exists( envName )) .. " - " .. tostring(has))
+	--]]
+end 
 
+
+
+--PackageManager:load  ( "levels/narratives/bain/cage/world" )
+--PackageManager:load  ( "environments/env_cage_tunnels_02/env_cage_tunnels_02" )
+
+--local raw_data = PackageManager:script_data(Idstring("environment"), Idstring("environments/env_cage_tunnels_02/env_cage_tunnels_02"))
+--SaveTable(raw_data,"raw_data.lua")
