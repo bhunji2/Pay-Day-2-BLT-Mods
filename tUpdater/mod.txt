@@ -3,7 +3,7 @@
 	,"description" 	: "Tast's simple Updater to provide self update with mods"
 	,"author" 		: "Tast"
 	,"contact" 		: ""
-	,"version" 		: "1.0"
+	,"version" 		: "1.01"
 	,"tUpdates"		:
 	[
 		{
