@@ -28,12 +28,12 @@ veritas:Load()
 
 function veritas:LevelsByVal(fValue, tValue)
 	if fValue == "all" then return self.levels end
-	local levels = {}
+	local  levels = {}
 	for k , v in pairs( self.levels_data or {} ) do
 		if 		self.levels_data[k][fValue] == tValue 
 		then	levels[v.level_id] = self.levels[v.level_id] end
 	end
-	if levels == {} then return nil end
+	if 	   levels == {} then return nil end
 	return levels
 	--log(tostring(levels == {} and nil or levels))
 	--return levels == {} and nil or levels
@@ -119,13 +119,17 @@ local Time_Data =
 	,{"pd2_env_foggy_bright","san_box001"					,"Foggy Bright Evening"} --亮霧夜 
 	,{"pd2_env_docks"		,"hlm_random_right003"			,"Cloudy Day"	} --陰天
 	
-	,{"pd2_indiana_basement","dentist/mus"					,"Foggy Day" 	} --白天霧
-	,{"pd2_indiana_diamond_room","dentist/mus"				,"Sunset" 		} --夕陽
+	,{"pd2_env_jry_plane"	,"pbr|pbr_plane"				,"test1"		}
+	
+	--,{"pd2_env_chew_2"	,"chew|chew_train_car"				,"test2"		}
+	
+	--,{"pd2_indiana_basement","dentist/mus"					,"Foggy Day" 	} --白天霧
+	--,{"pd2_indiana_diamond_room","dentist/mus"				,"Sunset" 		} --夕陽
 	--,{"env_cage_tunnels_02"	,"bain/cage"					,"Sunny"		} --夕陽前晴朗
 	
 	--,{"env_0200_night_moon_stars","crojob\burning_barrel","test"} 
 --	,{"pd2_env_hox_02","ssssssssssssss"} 
-}
+} 
 
 function Time_Menu_Items()
 	local data = {}
@@ -147,6 +151,8 @@ function LevelsTweakData:init(...)	DNF_LevelsTweakData_init(self,...)
 end
 
 function LevelsTweakData:VeritasSet()
+	if veritas.options[ "override" ] > #Time_Data then veritas.options[ "override" ] = 1 end
+	
 	local 	CustomLoaded = 0
 	for i , level_id in pairs( self._level_index ) do
 		local envName = false
@@ -354,15 +360,6 @@ function CheckLoadPackage(path)
 	and not PackageManager:loaded( path ) 
 	then 	PackageManager:load  ( path ) end
 end
---[[
-local PackageList =
-{
-	 "narratives/vlad/ukrainian_job/world_sounds"
-	,"narratives/vlad/jewelry_store/world_sounds"
-}
-
-for i , v in pairs( PackageList ) do CheckLoadPackage( "levels/" .. v ) end
---]]
 
 -- http://hyperpolyglot.org/more
 --[[
@@ -371,34 +368,24 @@ function escape_pattern(text)
 	:gsub("\a","\\a"):gsub("\a","\\a"):gsub("\b","\\b"):gsub("\f","\\f"):gsub("\n","\\n")
 	:gsub("\r","\\r"):gsub("\t","\\t"):gsub("\v","\\v"):gsub("\"",'\\"'):gsub("\'","\\'")
 end
-]]
-local texti = "\b"
---log("// " .. texti:gsub("\\","/"))
---log(escape_pattern(texti):gsub("\\([a-z])","/%1"))
---[[
-for i = 3 , #Time_Data , 1 do 
-	local path = "levels/" .. (Time_Data[i][2]:find("%/") and "narratives/" or "instances/unique/")
-	
-	--CheckLoadPackage(  .. path:gsub("\b","/b") .. Time_Data[i][2] .. "/world" ) 
-	CheckLoadPackage( "levels/" .. (Time_Data[i][2]:find("%/") and "narratives/" or "instances/unique/") .. Time_Data[i][2] .. "/world" )
-end
 --]]
+
 for i = 3 , #Time_Data , 1 do 
-	local path = Time_Data[i][2]:find("%/") and "narratives/" or "instances/unique/"
-	CheckLoadPackage( "levels/" .. path:gsub("\b","/b") .. Time_Data[i][2] .. "/world" ) 
-	
-	
-	--[[
-	local envName = "environments/" .. Time_Data[i][1] .. "/" .. Time_Data[i][1]
-	local has = PackageManager:has( Idstring("environment"),Idstring(envName) )
-	log("/ " .. envName .. " - " .. tostring(PackageManager:package_exists( envName )) .. " - " .. tostring(has))
-	--]]
+	local path = "levels/" ..(Time_Data[i][2]:find("%/") and "narratives/" or "instances/unique/")
+	CheckLoadPackage( path .. Time_Data[i][2]:gsub("%|","/") .. "/world" ) 
 end 
 
+function SaveScriptData(ext,path,filename)
+	if		PackageManager:package_exists( path )
+	and not PackageManager:loaded( path ) 
+	then 	PackageManager:load  ( path ) 
+	else 	return end
+	
+	local raw_data = PackageManager:script_data(Idstring(ext), Idstring(path))
+	SaveTable(raw_data,filename)
+end
 
-
---PackageManager:load  ( "levels/narratives/bain/cage/world" )
---PackageManager:load  ( "environments/env_cage_tunnels_02/env_cage_tunnels_02" )
-
---local raw_data = PackageManager:script_data(Idstring("environment"), Idstring("environments/env_cage_tunnels_02/env_cage_tunnels_02"))
---SaveTable(raw_data,"raw_data.lua")
+--[[
+SaveScriptData("world","levels/narratives/dentist/mus/world","world.lua")
+SaveScriptData("environment","environments/pd2_indiana_basement/pd2_indiana_basement","environment.lua")
+--]]
